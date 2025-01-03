@@ -158,6 +158,17 @@ files = [
 all = ["flake8 (>=7.1.1)", "mypy (>=1.11.2)", "pytest (>=8.3.2)", "ruff (>=0.6.2)"]
 
 [[package]]
+name = "mutagen"
+version = "1.47.0"
+description = "read and write audio tags for many formats"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "mutagen-1.47.0-py3-none-any.whl", hash = "sha256:edd96f50c5907a9539d8e5bba7245f62c9f520aef333d13392a79a4f70aca719"},
+    {file = "mutagen-1.47.0.tar.gz", hash = "sha256:719fadef0a978c31b4cf3c956261b3c58b6948b32023078a2117b1de09f0fc99"},
+]
+
+[[package]]
 name = "pyreadline3"
 version = "3.5.4"
 description = "A python implementation of GNU readline."
@@ -281,4 +292,4 @@ requests = ">=2.22"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "ab183ea3e90c0eba31aadf4b5080b8da62f2e49030a5d6dafeedf4ca85993f55"
+content-hash = "921f3a2525c5fbdfe1dc912d8d236816f2860899eec6e0e389509300397995b2"

@@ -1,10 +1,9 @@
-from spotify_music_dl import SpotifyDownloader
-from dotenv import load_dotenv
 import os
 
+from dotenv import load_dotenv
+
+from spotify_music_dl import SpotifyDownloader
+
 load_dotenv()
-dl = SpotifyDownloader(
-    client_id=os.getenv("CLIENT_ID"),
-    client_secret=os.getenv("CLIENT_SECRET")
-)
-dl.download_playlist("https://open.spotify.com/playlist/5AHH67GYsljwoB1q6UGvWg?si=LLFyrho2SwaMehMWj2Iylw&pi=e-OU8F2q3wSb23")
+dl = SpotifyDownloader(client_id=os.getenv("CLIENT_ID"), client_secret=os.getenv("CLIENT_SECRET"))
+dl.download_track("https://open.spotify.com/track/01MWhxH5vfaCJJybmHFdcH?si=vjJ11CM3QXuy_A6b4QK4Rw")

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spotify-music-dl"
-version = "0.0.2"
+version = "0.0.3"
 description = "A simple tool to download Spotify tracks and playlists"
 authors = ["anekobtw <krolexonder@gmail.com>"]
 license = "MIT"
@@ -12,6 +12,7 @@ coloredlogs = "^15.0.1"
 spotipy = "^2.25.0"
 yt-dlp = "^2024.12.23"
 ytmusicapi = "^1.9.1"
+mutagen = "^1.47.0"
 
 
 [build-system]
