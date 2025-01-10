@@ -1,16 +1,13 @@
+import asyncio
 import logging
 import time
-from io import BytesIO
-from re import search
 
 import coloredlogs
-import requests
 import spotipy
 import yt_dlp
-from mutagen.id3 import APIC, ID3, TIT2, TPE1
-from mutagen.mp3 import MP3
 from spotipy.oauth2 import SpotifyClientCredentials
-from ytmusicapi import YTMusic
+
+from spotify_music_dl import helpers
 
 coloredlogs.install(
     level="INFO",
@@ -27,12 +24,10 @@ coloredlogs.install(
 
 class SpotifyDownloader:
     def __init__(self, client_id: str, client_secret: str) -> None:
-        self.ytmusic = YTMusic()
         self.spotify = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
-        logging.info("Spotify and YTMusic clients initialized successfully.")
+        logging.info("Spotify client initialized successfully.")
 
-    def get_track_metadata(self, track_url: str) -> dict[str, str]:
-        logging.info(f"Fetching metadata for track: {track_url}")
+    async def get_track_metadata(self, track_url: str) -> dict:
         track = self.spotify.track(track_url)
         metadata = {
             "name": track["name"],
@@ -40,36 +35,17 @@ class SpotifyDownloader:
             "album": track["album"]["name"],
             "thumbnail_url": track["album"]["images"][0]["url"],
         }
-        logging.info(f"Metadata fetched successfully: {metadata}")
         return metadata
 
-    def find_song(self, track_url: str) -> str:
-        metadata = self.get_track_metadata(track_url)
-        query = f"{metadata['artist']} - {metadata['name']} {metadata['album']}"
-        search_results = self.ytmusic.search(query, filter="songs", ignore_spelling=True)
-        logging.info(f"Track found: {search_results[0]["title"]}")
-        return "https://youtu.be/" + search_results[0]["videoId"]
-
-    def set_track_metadata(self, filename: str, title: str, artist: str, thumbnail_url: str) -> None:
-        audio = MP3(f"{filename}.mp3", ID3=ID3)
-        audio.tags.add(TIT2(encoding=3, text=title))
-        audio.tags.add(TPE1(encoding=3, text=artist))
-
-        response = requests.get(thumbnail_url)
-        image_data = BytesIO(response.content)
-        audio.tags.add(APIC(encoding=3, mime="image/jpeg", type=3, desc="Cover", data=image_data.read()))
-
-        audio.save()
-
-    def download_track(self, track_url: str, filename: str = None) -> None:
+    async def download_track(self, track_url: str, filename: str = None) -> None:
         try:
             start = time.perf_counter()
 
-            metadata = self.get_track_metadata(track_url)
-            if filename == None:
+            metadata = await self.get_track_metadata(track_url)
+            if filename is None:
                 filename = metadata["name"]
             if filename.endswith(".mp3"):
-                filename.removesuffix(".mp3")
+                filename = filename.removesuffix(".mp3")
 
             ydl_opts = {
                 "format": "bestaudio/best",
@@ -77,30 +53,50 @@ class SpotifyDownloader:
                 "quiet": True,
                 "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}],
             }
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                url = self.find_song(track_url)
-                logging.info(f"Downloading track: {url}")
-                ydl.download(url)
+            url = helpers.find_song(metadata)
 
-            self.set_track_metadata(filename, metadata["name"], metadata["artist"], metadata["thumbnail_url"])
+            logging.info("Downloading track: %s", url)
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, self._download_with_yt_dlp, url, ydl_opts)
+
+            await helpers.set_track_metadata(filename, filename, metadata["artist"], metadata["thumbnail_url"])
 
             end = time.perf_counter()
-            logging.info(f"Track downloaded successfully in {round(end-start)} seconds")
+            logging.info("Track downloaded successfully in %d seconds", round(end - start))
 
         except Exception as e:
-            logging.error(f"Error downloading track: {e}")
+            if "403" in str(e):
+                logging.error("Error 403 caught. Retrying..")
+                return await self.download_track(track_url, filename)
+            logging.error("Error downloading track: %s", e)
             raise
 
-    def download_playlist(self, playlist_url: str, directory_name: str = None) -> None:
+    def _download_with_yt_dlp(self, url, ydl_opts):
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+
+    async def download_playlist(self, playlist_url: str, directory_name: str = None) -> None:
         try:
-            if directory_name == None:
+            start = time.time()
+
+            if directory_name is None:
                 playlist = self.spotify.playlist(playlist_url)
                 directory_name = playlist["name"]
 
             results = self.spotify.playlist_tracks(playlist_url)
+
+            tasks = []
             for item in results["items"]:
-                metadata = self.get_track_metadata(item["track"]["external_urls"]["spotify"])
-                self.download_track(item["track"]["external_urls"]["spotify"], filename=f"{directory_name}/{metadata['name']}.%(ext)s")
+                track_url = item["track"]["external_urls"]["spotify"]
+                filename = f"{directory_name}/{item['track']['name']}"
+                tasks.append(self.download_track(track_url, filename))
+
+            logging.info("Downloading %d songs.", len(tasks))
+            await asyncio.gather(*tasks)
+
+            end = time.time()
+            logging.info("Successfully downloaded playlist in %.2f seconds. ~%.2f seconds per song.", end - start, (end - start) / len(tasks))
+
         except Exception as e:
-            logging.error(f"Error downloading track: {e}")
+            logging.error("Error downloading playlist: %s", e)
             raise

@@ -1,10 +1,11 @@
 [tool.poetry]
 name = "spotify-music-dl"
-version = "0.0.3"
+version = "0.0.4"
 description = "A simple tool to download Spotify tracks and playlists"
 authors = ["anekobtw <krolexonder@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/anekobtw/spotify_music_dl"
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -13,6 +14,7 @@ spotipy = "^2.25.0"
 yt-dlp = "^2024.12.23"
 ytmusicapi = "^1.9.1"
 mutagen = "^1.47.0"
+aiohttp = "^3.11.11"
 
 
 [build-system]
