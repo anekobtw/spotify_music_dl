@@ -59,7 +59,7 @@ class SpotifyDownloader:
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, self._download_with_yt_dlp, url, ydl_opts)
 
-            await helpers.set_track_metadata(filename, filename, metadata["artist"], metadata["thumbnail_url"])
+            await helpers.set_track_metadata(filename, metadata["name"], metadata["artist"], metadata["thumbnail_url"])
 
             end = time.perf_counter()
             logging.info("Track downloaded successfully in %d seconds", round(end - start))

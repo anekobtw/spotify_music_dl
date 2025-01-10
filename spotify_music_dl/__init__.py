@@ -6,6 +6,6 @@ __url__ = "https://github.com/anekobtw/spotify_music_dl"
 __title__ = "spotify_music_dl"
 __author__ = "anekobtw"
 __license__ = "MIT"
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 from spotify_music_dl.downloader import SpotifyDownloader

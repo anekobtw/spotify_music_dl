@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spotify-music-dl"
-version = "0.0.4"
+version = "0.0.5"
 description = "A simple tool to download Spotify tracks and playlists"
 authors = ["anekobtw <krolexonder@gmail.com>"]
 license = "MIT"
